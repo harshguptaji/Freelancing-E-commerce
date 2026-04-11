@@ -29,16 +29,20 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     userEmailOTP:{
-        type: String
+        type: String,
+        select: false
     },
     userEmailOTPExpiry:{
-        type: Date
+        type: Date,
+        select: false
     },
     userMobileOTP:{
-        type: String
+        type: String,
+        select: false
     },
     userMobileOTPExpiry:{
-        type: Date
+        type: Date,
+        select: false
     },
     userVerified:{
         type: Boolean,
@@ -50,7 +54,8 @@ const userSchema = new mongoose.Schema({
         default: Date.now
     },
     passwordForgot: {
-        type: Date
+        type: Date,
+        select: false
     }
 });
 
