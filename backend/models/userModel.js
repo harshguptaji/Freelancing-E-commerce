@@ -32,16 +32,12 @@ const userSchema = new mongoose.Schema({
         type: String,
         select: false
     },
-    userEmailOTPExpiry:{
+    userOTPExpiry:{
         type: Date,
         select: false
     },
     userMobileOTP:{
         type: String,
-        select: false
-    },
-    userMobileOTPExpiry:{
-        type: Date,
         select: false
     },
     userVerified:{
@@ -61,9 +57,13 @@ const userSchema = new mongoose.Schema({
 
 
 userSchema.pre("save", async function (next){
-    if(!this.isModified("userPassword")) return next();
+    if(this.isModified("userPassword")){
+        this.userPassword = await bcrypt.hash(this.userPassword, 10);
+    } 
+    if(this.isModified("userEmailOTP") || this.isModified("userMobileOTP")){
+        this.userEmailOTP = await bcrypt.hash(this.userEmailOTP,10)
+    }
 
-    this.userPassword = await bcrypt.hash(this.userPassword, 10);
     next();
 });
 
