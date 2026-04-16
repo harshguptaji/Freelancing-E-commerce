@@ -86,6 +86,13 @@ export const userLogin = async(req,res) => {
 
         const checkPassword = await user.comparePassword(userPassword);
 
+        if(!checkPassword){
+            return res.status(400).json({
+                message: "Passwors is Incorrect",
+                success: false
+            });
+        }
+
         const token = generateToken(user);
         
         // set cookies
@@ -104,6 +111,25 @@ export const userLogin = async(req,res) => {
         console.log(`Error - ${error}`);
     }
 };
+
+// Logout User
+export const userLogout = async(_,res) => {
+    try {
+        res.clearCookie("token",{
+            httpOnly: true,
+            secure: false, //development
+            sameSite: "lax"
+        })
+
+        return res.status(200).json({
+            message: "User Logout Successfully",
+            success: true
+        });
+
+    } catch (error) {
+        console.log(`Error - ${error}`);
+    }
+}
 
 // All User
 export const allUser = async(req,res) => {
@@ -163,6 +189,143 @@ export const loginUserInfo = async(req,res) => {
             user
         });
 
+    } catch (error) {
+        console.log(`Error - ${error}`);
+    }
+};
+
+// Update Login User Infromation
+export const updateLoginUserInfo = async(req,res) => {
+    try {
+        const id = req.user.id;
+        // Find User By Id
+        const user = await User.findById(id);
+
+        const {userName, userEmail, userMobile} = req.body;
+
+        if(!user){
+            return res.status(400).json({
+                message: "User does not exist any more",
+                success: false
+            })
+        }
+
+        if(userName){
+            user.userName = userName;
+        }
+
+        if(userEmail){
+            const checkEmail = await User.findOne(userEmail);
+            if(checkEmail){
+                return res.status(400).josn({
+                    message: `${userEmail}, already found`,
+                    success: false
+                });
+            }
+            user.userEmail = userEmail;
+            user.userVerified = false;
+        }
+
+        if(userMobile){
+            const checkMobile = await User.findOne(userMobile);
+            if(checkMobile){
+                return res.status(400).json({
+                    message: `${userMobile}, already found`,
+                    success: false
+                });
+            }
+            user.userMobile = userMobile;
+            user.userVerified = false;
+        }
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            success: true
+        });
+
+    } catch (error) {
+        console.log(`Error - ${error}`);
+    }
+};
+
+// Change Password By Login User
+export const passwordChange = async(req,res) => {
+    try {
+        const id = req.user.id;
+        const {userPassword, updatePassword} = req.body;
+        if(!userPassword || !updatePassword){
+            return res.status(400).json({
+                message: "Fill all required fields",
+                success: false
+            });
+        }
+
+        if(userPassword == updatePassword){
+            return res.status(400).josn({
+                message: "Password is same",
+                success: false
+            })
+        }
+
+        const user = await User.findById(id);
+
+        if(!user){
+            return res.status(400).json({
+                message: "user is not exist any more",
+                success: false
+            })
+        }
+
+        const checkPassword = await user.comparePassword(userPassword);
+
+        if(!checkPassword){
+            return res.status(400).json({
+                message: "Password does not match",
+                success: fasle
+            })
+        }
+
+        //update Password
+        user.userPassword = updatePassword;
+        await user.save();
+
+        return res.status(200).josn({
+            message: "Password Change Successfully",
+            success: true
+        });
+
+    } catch (error) {
+        console.log(`Error - ${error}`);
+    }
+};
+
+
+// Verified Account
+export const userVerify = async(req,res) => {
+    try {
+        const {emailOTP, mobileOTP} = req.body;
+        const id = req.user.id;
+
+        if(!emailOTP || !mobileOTP){
+            return res.status(400).json({
+                message: "Please fill are required fields",
+                success: false
+            });
+        }
+
+        const user = await User.findById(id).select("+userEmailOTP +userMobileOTP +userOTPExpiry");
+
+        if(Date.now() > user.userOTPExpiry){
+            return res.status(400).json({
+                message: "OTP expires, Try Once Again",
+                success: false
+            });
+        }
+
+        
+    
     } catch (error) {
         console.log(`Error - ${error}`);
     }
