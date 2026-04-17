@@ -2,6 +2,12 @@ import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 
 
+// Generate OTP
+const generateOTP = ()=>{
+    const otp = Math.floor(Math.random()*900000 + 100000);
+    return otp;
+}
+
 // Generate token
 const generateToken = (user) => {
     return jwt.sign(
@@ -324,9 +330,61 @@ export const userVerify = async(req,res) => {
             });
         }
 
+        const checkMobileOTP = await user.compareMobileOTP(mobileOTP);
+
+        const checkEmailOTP = await user.compareEmailOTP(emailOTP);
+
+        if(!checkEmailOTP || !checkMobileOTP){
+            return res.status(400).json({
+                message: !checkEmailOTP ? "Email OTP is wrong" : "Mobile OTP is wrong",
+                success: false
+            });
+        }
+
+        user.userVerified = true;
+
+        await user.save();
+
+        return res.status(200).josn({
+            message: "Your account is verified",
+            success: true
+        });
         
     
     } catch (error) {
         console.log(`Error - ${error}`);
+    }
+};
+
+
+// Sent OTP to Email and Mobile
+export const sentOTP = async(req,res) => {
+    try {
+        const id = req.user.id;
+
+        const user = await User.findById(id).select("+userMobileOTP +userEmailOTP +userOTPExpiry");
+
+        if(!user){
+            return res.status(400).json({
+                message: "This user in not exist any more",
+                success: false
+            });
+        }
+
+        const mobileOTP = generateOTP();
+        const emailOTP = generateOTP();
+
+        user.userEmailOTP = emailOTP;
+        user.userMobileOTP = mobileOTP;
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "OTP sent successfully",
+            success: true
+        });
+
+    } catch (error) {
+        console.log(`error - ${error}`);
     }
 }
