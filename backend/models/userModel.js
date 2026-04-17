@@ -71,5 +71,13 @@ userSchema.methods.comparePassword = async function(enteredPassword){
     return await bcrypt.compare(enteredPassword, this.userPassword);
 }
 
+userSchema.methods.compareMobileOTP = async function(mobileOTP){
+    return await bcrypt.compare(mobileOTP, this.userMobileOTP);
+}
+
+userSchema.methods.compareEmaileOTP = async function(emailOTP){
+    return await bcrypt.compare(emailOTP, this.userEmailOTP);
+}
+
 const User = mongoose.model("User", userSchema);
 export default User;
