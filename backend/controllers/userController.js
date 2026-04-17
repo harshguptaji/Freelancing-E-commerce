@@ -1,5 +1,7 @@
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "../utils/sendEmail.js";
+import { sendSMS } from "../utils/sendSMS.js";
 
 
 // Generate OTP
@@ -374,6 +376,27 @@ export const sentOTP = async(req,res) => {
         const mobileOTP = generateOTP();
         const emailOTP = generateOTP();
 
+        // Messages for Email and SMS
+        const emailSUB = `Your New OTP`
+        const emailMSG = `Hello,
+
+                        Your OTP is: ${emailOTP}
+
+                        This OTP is valid for 3 minutes.
+                        Do not share this code with anyone.
+
+                        Thanks,
+                        Team Support`
+
+        const smsMSG = `Your OTP is ${mobileOTP}. Valid for 3 minutes. Do not share it.`
+
+        // send Email
+        await sendEmail(user.userEmail, emailSUB, emailMSG);
+        // send SMS
+        await sendSMS(user.userMobile, smsMSG);
+
+        // Save OTP and Expiry Date
+        user.userOTPExpiry = Date.now() + 60*3*1000;
         user.userEmailOTP = emailOTP;
         user.userMobileOTP = mobileOTP;
 
