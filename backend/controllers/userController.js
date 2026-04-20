@@ -454,7 +454,7 @@ export const forgotPassword = async(req,res) => {
         }
 
         if(userEmail && userOTP && userPassword){
-            const user = await User.findOne(userEmail).select("+userOTPExpiry +userPassword");
+            const user = await User.findOne(userEmail).select("+userOTPExpiry +userPassword +passwordForgot");
             const checkOTP = user.compareEmailOTP(userOTP);
 
             if(Date.now() > user.userOTPExpiry){
@@ -472,7 +472,7 @@ export const forgotPassword = async(req,res) => {
             }
 
             user.userPassword = userPassword;
-
+            user.passwordForgot = Date.now();
             await user.save();
 
             return res.status(200).json({
