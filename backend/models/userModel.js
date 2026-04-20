@@ -45,6 +45,18 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: false
     },
+    userWishlist: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product"
+        }
+    ],
+    userAddToCart: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product"
+        }
+    ],
     userCreated: {
         type: Date,
         default: Date.now
