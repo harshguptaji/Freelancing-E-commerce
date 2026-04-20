@@ -57,7 +57,7 @@ export const isAuthenthicated = async(req,res,next) => {
 };
 
 // Role based Check
-export const authorizeRoles = async(...roles) => {
+export const authorizeRoles = (...roles) => {
     try {
         return (req,res,next) => {
             if(!roles.includes(req.user.role)){
