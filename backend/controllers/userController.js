@@ -410,4 +410,83 @@ export const sentOTP = async(req,res) => {
     } catch (error) {
         console.log(`error - ${error}`);
     }
-}
+};
+
+// Forgot Password
+export const forgotPassword = async(req,res) => {
+    try {
+        const {userEmail, userOTP, userPassword} = req.body;
+
+        if(!userEmail && !userOTP && !userPassword){
+            return res.status(400).josn({
+                message: "Please give email first then OTP",
+                success: fasle
+            });
+        }
+
+        if(userEmail && !userOTP && !userPassword){
+            const user = await User.findOne(userEmail);
+
+            const otp = generateOTP();
+            const emailSUB = `Forgot Password | OTP`
+            const emailMSG = `Hello ${user.userName},
+
+                        Your OTP is: ${otp}
+
+                        This OTP is valid for 3 minutes.
+                        Do not share this code with anyone.
+
+                        Thanks,
+                        Team Support`
+
+            // send OTP to email
+            await sendEmail(userEmail, emailSUB, emailMSG);
+
+            user.userEmailOTP = otp;
+            user.userOTPExpiry = Date.now() + 3*60*1000;
+
+            await user.save();
+
+            return res.status(200).json({
+                message: "OTP send successfully",
+                success: true
+            });
+        }
+
+        if(userEmail && userOTP && userPassword){
+            const user = await User.findOne(userEmail).select("+userOTPExpiry +userPassword");
+            const checkOTP = user.compareEmailOTP(userOTP);
+
+            if(Date.now() > user.userOTPExpiry){
+                return res.status(400).json({
+                    message: "You are out of time",
+                    success: false
+                })
+            }
+
+            if(!checkOTP){
+                return res.status(400).json({
+                    message: "OTP is incorrect, please try again",
+                    success: false
+                });
+            }
+
+            user.userPassword = userPassword;
+
+            await user.save();
+
+            return res.status(200).json({
+                message: "Your password is updated",
+                success: trye
+            });
+
+            return res.status(400).json({
+                message: "You are missing any of the field, please try one more time",
+                success: false
+            })
+        }
+
+    } catch (error) {
+        console.log(`Error - ${error}`);
+    }
+};
