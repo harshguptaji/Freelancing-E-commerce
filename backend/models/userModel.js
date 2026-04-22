@@ -69,11 +69,15 @@ const userSchema = new mongoose.Schema({
 
 
 userSchema.pre("save", async function (next){
+
     if(this.isModified("userPassword")){
         this.userPassword = await bcrypt.hash(this.userPassword, 10);
     } 
-    if(this.isModified("userEmailOTP") || this.isModified("userMobileOTP")){
+    if(this.isModified("userEmailOTP")){
         this.userEmailOTP = await bcrypt.hash(this.userEmailOTP,10)
+    }
+    if(this.isModified("userMobileOTP")){
+        this.userMobileOTP = await bcrypt.hash(this.userMobileOTP,10)
     }
 
     next();

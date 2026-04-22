@@ -79,6 +79,19 @@ const productSchema = new mongoose.Schema({
     }
 });
 
+productSchema.pre("save", async function(next){
+    if(this.isModified("productDiscount") || this.isModified("productPrice")){
+
+        if(!this.productDiscount){
+            this.finalPrice = this.productPrice;
+        } else{
+            const discountAmount = (this.productPrice * this.productDiscount) / 100;
+            this.finalPrice = this.productPrice - discountAmount;
+        }
+        
+    }
+});
+
 const Product = mongoose.model("Product",productSchema);
 
 export default Product;
