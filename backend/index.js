@@ -5,6 +5,7 @@ import express from "express";
 import { connectDB } from "./db/db.js";
 import cookieParser from "cookie-parser";
 import userRoute from "./routes/userRoutes.js";
+import categoryRoute from "./routes/categoryRoute.js";
 
 //Database connected
 connectDB();
@@ -18,6 +19,7 @@ app.use(cookieParser());
 
 // ALL Routes
 app.use("/api/v1/user",userRoute);
+app.use("/api/v1/category", categoryRoute);
 
 
 const PORT = process.env.PORT || 4000;
