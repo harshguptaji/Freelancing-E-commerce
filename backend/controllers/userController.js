@@ -42,7 +42,7 @@ export const registerUser = async(req,res) => {
             $or: [
                 {userEmail},{userMobile}
             ]
-        }).select("_id");
+        }).select("+_id");
 
         if(checkUser){
             return res.status(400).json({
