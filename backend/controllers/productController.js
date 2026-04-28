@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { uploadCloundinary } from "../middlewares/upload";
 import Category from "../models/categoryModel.js";
 import Product from "../models/productModel.js";
@@ -76,12 +77,27 @@ export const registerProduct = async(req,res) => {
 // All Product
 export const allProducts = async(req,res) => {
     try {
-        const products = await Product.find();
+
+        let {page = 1, limit = 10} = req.query;
+
+        page = Number(page);
+        limit = Number(limit);
+
+        const skip = (page - 1)*limit;
+
+        const products = await Product.find()
+        .select("productName productDes finalPrice productImages productAvgRating")
+        .sort({createdAt = -1})
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+        const totalProducts = await Product.countDocuments();
 
         return res.status(200).json({
-            message: "All Products",
+            success: true,
             products,
-            success: true
+            hasMore: skip + products.length < totalProducts
         });
 
     } catch (error) {
@@ -95,8 +111,11 @@ export const productById = async(req,res) => {
         const id = req.params.id;
 
         const product = await Product.findById(id).populate({
-            path: "Category",
+            path: "productCategory",
             select: "categoryName"
+        }).populate({
+            path: "productReviews.userId",
+            select: "userName"
         });
         
         if(!product){
@@ -121,6 +140,13 @@ export const productById = async(req,res) => {
 export const editProduct = async(req,res) => {
     try {
         const id = req.params.id;
+        // ✅ Validate ID
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Product ID"
+            });
+        }
         const {productName, productDes, productPrice, productCategory, productStock, productDiscount} = req.body;
 
         const product = await Product.findById(id);
@@ -133,7 +159,10 @@ export const editProduct = async(req,res) => {
         }
 
         if(productName){
-            const checkName = await Product.findOne(productName);
+            const checkName = await Product.findOne({
+                productName,
+                _id: { $ne: id }
+            });
 
             if(checkName){
                 return res.status(200).json({
@@ -148,7 +177,7 @@ export const editProduct = async(req,res) => {
             product.productDes = productDes;
         }
 
-        if(productPrice){
+        if(productPrice !== undefined){
             product.productPrice = productPrice
         }
 
@@ -163,11 +192,11 @@ export const editProduct = async(req,res) => {
             product.productCategory = checkCategory._id;
         }
 
-        if(productStock){
+        if(productStock !== undefined){
             product.productStock = productStock;
         }
 
-        if(productDiscount){
+        if(productDiscount !== undefined){
             product.productDiscount = productDiscount;
         }
 
@@ -181,4 +210,105 @@ export const editProduct = async(req,res) => {
     } catch (error) {
         console.log(`Error - ${error}`);
     }
-}
+};
+
+// Update Images of a Product
+export const updateImageProduct = async(req,res) => {
+    try {
+        const id = req.params.id;
+
+        const {existingImages} = req.body;
+
+        if(!mongoose.Types.ObjectId.isValid(id)){
+            return res.status(400).json({
+                message: "Kindly refresh your page",
+                success: false
+            });
+        }
+
+        const product = await Product.findById(id).select("productImages");
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found"
+            });
+        }
+
+        // =========================
+        // 🔹 Parse existing images
+        // =========================
+
+        let keepImages = [];
+
+        if (existingImages) {
+            try {
+                keepImages = JSON.parse(existingImages);
+            } catch {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid existingImages format"
+                });
+            }
+        }
+
+        // Step 1: count new uploads
+        const newImagesCount = req.files ? req.files.length : 0;
+
+        // Step 2: calculate final length BEFORE any delete
+        const finalCount = keepImages.length + newImagesCount;
+
+        if (finalCount > 5) {
+            return res.status(400).json({
+                success: false,
+                message: "Maximum 5 images allowed"
+            });
+        }
+
+        // =========================
+        // 🔥 DELETE removed images
+        // ==========================
+
+        const imageToDelete = product.productImages.filter(
+            oldImg => !keepImages.find(k => k.publicId === oldImg.publicId)
+        )
+
+        for(const img of imageToDelete){
+            await cloudinary.v2.uploader.destroy(img.publicId);
+        }
+
+        // =========================
+        // 🔥 UPLOAD new images
+        // =========================
+
+        let newImages = [];
+
+        if(req.file && req.files.length > 0){
+            const uploads = req.files.map(async (file) => {
+                const result = await uploadCloundinary(file.buffer);
+                return {
+                    publicId: result.public_id,
+                    url: result.secure_url,
+                };
+            })
+            newImages = await Promise.all(uploads);
+        }
+
+        // Final Images
+        const finalImages = [...keepImages,...newImages];
+
+        // save Images
+        product.productImages = finalImages;
+        await product.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Product images updated successfully",
+            images: product.productImages
+        });
+
+    } catch (error) {
+        console.log(`Error - ${error}`)
+    }
+};
+
