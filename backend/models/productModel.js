@@ -19,8 +19,7 @@ const productSchema = new mongoose.Schema({
         required: true
     },
     finalPrice: {
-        type: Number,
-        required: true
+        type: Number
     },
     productImages: [
         {
@@ -39,7 +38,9 @@ const productSchema = new mongoose.Schema({
     },
     productDiscount: {
         type: Number,
-        default: 0
+        default: 0,
+        min: [0, "Discount cannot be negative"],
+        max: [90, "Discount cannot exceed 90%"]
     },
     productAvgRating: {
         type: Number,
@@ -48,32 +49,8 @@ const productSchema = new mongoose.Schema({
     productTotalReviews: {
         type: Number,
         default: 0
-    },
-    productReviews: [
-        {
-            userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "User",
-                required: true
-            },
-            rating: {
-                type: Number,
-                required: true,
-                min: [1, "Min rating shoulb be 1"],
-                max: [5, "Max rating should be 5"]
-            },
-            review: {
-                type: String,
-                minlength: [10, "Minimum length is 10"],
-                maxlength: [250, "Maximum length is 250"]
-            }
-        }
-    ],
-    createdOn: {
-        type: Date,
-        default: Date.now
     }
-});
+}, {timestamps: true});
 
 productSchema.pre("save", async function(next){
     if(this.isModified("productDiscount") || this.isModified("productPrice")){
@@ -84,7 +61,7 @@ productSchema.pre("save", async function(next){
             const discountAmount = (this.productPrice * this.productDiscount) / 100;
             this.finalPrice = this.productPrice - discountAmount;
         }
-        
+        next();
     }
 });
 
