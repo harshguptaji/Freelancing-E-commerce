@@ -283,16 +283,15 @@ export const updateImageProduct = async(req,res) => {
 
         let newImages = [];
 
-        if(req.file && req.files.length > 0){
-            const uploads = req.files.map(async (file) => {
+        newImages = await Promise.all(
+            req.files.map(async (file) => {
                 const result = await uploadCloundinary(file.buffer);
                 return {
                     publicId: result.public_id,
                     url: result.secure_url,
                 };
             })
-            newImages = await Promise.all(uploads);
-        }
+        );
 
         // Final Images
         const finalImages = [...keepImages,...newImages];
