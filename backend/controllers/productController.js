@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { uploadCloundinary } from "../middlewares/upload";
 import Category from "../models/categoryModel.js";
 import Product from "../models/productModel.js";
+import cloudinary from "../config/cloudinary.js";
 
 // Controller to register product and Image Upload Handling
 export const registerProduct = async(req,res) => {
@@ -273,8 +274,12 @@ export const updateImageProduct = async(req,res) => {
             oldImg => !keepImages.find(k => k.publicId === oldImg.publicId)
         )
 
-        for(const img of imageToDelete){
-            await cloudinary.v2.uploader.destroy(img.publicId);
+        if (imagesToDelete.length > 0) {
+            await Promise.all(
+                imagesToDelete.map(img =>
+                    cloudinary.uploader.destroy(img.publicId)
+                )
+            );
         }
 
         // =========================
@@ -310,4 +315,54 @@ export const updateImageProduct = async(req,res) => {
         console.log(`Error - ${error}`)
     }
 };
+
+// Delete Product
+export const deleteProduct = async(req,res) => {
+    try {
+        const id = req.params.id;
+
+        if(!mongoose.Types.ObjectId.isValid(id)){
+            return res.status(400).json({
+                message: "Kindly refresh your page",
+                success: false
+            });
+        }
+
+        const product = await Product.findByIdAndDelete(id);
+
+        if (!product) {
+            return res.status(404).json({
+                message: "Product not found",
+                success: false
+            });
+        }
+
+        // ✅ Delete Images from Cloudinary
+        if (product.productImages && product.productImages.length > 0) {
+            await Promise.all(
+                product.productImages.map(img =>
+                    cloudinary.uploader.destroy(img.publicId)
+                )
+            );
+        }
+
+        // ToDo Delete Reviews
+
+        return res.status(200).json({
+            message: "Product Delete Successfully",
+            success: true
+        })
+    } catch (error) {
+        console.log(`Error - ${error}`);
+    }
+};
+
+// Search and Filter of products
+export const searchProduct = async(req,res) => {
+    try {
+        
+    } catch (error) {
+        console.log(`Error - ${error}`);
+    }
+}
 
