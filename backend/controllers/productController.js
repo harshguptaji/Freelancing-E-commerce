@@ -3,6 +3,7 @@ import { uploadCloundinary } from "../middlewares/upload";
 import Category from "../models/categoryModel.js";
 import Product from "../models/productModel.js";
 import cloudinary from "../config/cloudinary.js";
+import Review from "../models/reviewProduct.js";
 
 // Controller to register product and Image Upload Handling
 export const registerProduct = async(req,res) => {
@@ -337,7 +338,7 @@ export const deleteProduct = async(req,res) => {
             });
         }
 
-        // ✅ Delete Images from Cloudinary
+        // Delete Images from Cloudinary
         if (product.productImages && product.productImages.length > 0) {
             await Promise.all(
                 product.productImages.map(img =>
@@ -346,7 +347,8 @@ export const deleteProduct = async(req,res) => {
             );
         }
 
-        // ToDo Delete Reviews
+        // Delete Reviews
+        const deleteReview = await Review.deleteMany({productId:id});
 
         return res.status(200).json({
             message: "Product Delete Successfully",
