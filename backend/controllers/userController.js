@@ -490,3 +490,60 @@ export const forgotPassword = async(req,res) => {
         console.log(`Error - ${error}`);
     }
 };
+
+// Wishlist Add and Remove
+export const whistlistAddRemove = async(req, res) => {
+    try {
+        const Id = req.user.id;
+        const {productId} = req.body;
+
+        if(!productId){
+            return res.status(400).json({
+                message: "Product Id is required",
+                success: false
+            });
+        }
+
+        const user = await User.findById(Id);
+
+        if(!user){
+            return res.status(400).json({
+                message: "This user is not exist any more",
+                success: false
+            });
+        }
+
+        const product = await Product.findById(productId);
+
+        if(!product){
+            return res.status(400).json({
+                message: "This product is not exist any more",
+                success: false
+            });
+        }
+        
+        const indexFound = user.userWishlist.findIndex((item) => item.toString() === productId);
+
+        if(indexFound !== -1){
+            user.userWishlist.splice(indexFound, 1);
+            await user.save();
+            return res.status(200).json({
+                message: "Product removed from wishlist",
+                success: true
+            });
+        } else {
+            user.userWishlist.push(productId);
+            await user.save();
+            return res.status(200).json({
+                message: "Product added to wishlist",
+                success: true
+            });
+        }
+    } catch (error) {
+        console.log(`Error - ${error}`);
+        return res.status(500).json({
+            message: "Internal Server Error",
+            success: false
+        });
+    }
+};
