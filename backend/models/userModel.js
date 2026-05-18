@@ -51,12 +51,6 @@ const userSchema = new mongoose.Schema({
             ref: "Product"
         }
     ],
-    userAddToCart: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Product"
-        }
-    ],
     userCreated: {
         type: Date,
         default: Date.now
