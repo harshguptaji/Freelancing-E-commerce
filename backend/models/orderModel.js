@@ -6,6 +6,7 @@ const orderSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
+
     items: [
         {
             productId: {
@@ -13,7 +14,7 @@ const orderSchema = new mongoose.Schema({
                 ref: "Product",
                 required: true
             },
-            name:{
+            name: {
                 type: String,
                 required: true
             },
@@ -28,51 +29,73 @@ const orderSchema = new mongoose.Schema({
             }
         }
     ],
-    subTotal: {
+
+    subtotal: {
         type: Number,
         required: true,
         default: 0
     },
+
+    gstPrice: {
+        type: Number,
+        default: 0
+    },
+
+    deliveryPrice: {
+        type: Number,
+        default: 0
+    },
+
+    discountCode: {
+        type: String,
+        default: null
+    },
+
+    discountAmount: {
+        type: Number,
+        default: 0
+    },
+
     totalPrice: {
         type: Number,
         required: true,
-        default: 0      
+        default: 0
     },
+
     status: {
         type: String,
         enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
         default: "pending"
     },
-    address: {
-        type: String,
-        required: true
-    },
+
     paymentMethod: {
         type: String,
         enum: ["Online", "COD"],
         required: true
     },
-    gstPrice: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    deliveryPrice: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    discountCode: {
-        type: String,
-        default: null
-    },
-    discountAmount: {
-        type: Number,
-        required: true,
-        default: 0
+
+    paymentInfo: {
+        paymentId: {
+            type: String,
+            default: null
+        },
+        orderId: {
+            type: String,
+            default: null
+        },
+        signature: {
+            type: String,
+            default: null
+        },
+        paymentStatus: {
+            type: String,
+            enum: ["pending", "paid", "failed"],
+            default: "pending"
+        }
     }
+
 }, { timestamps: true });
 
-const Order = mongoose.model("Order",orderSchema);
+const Order = mongoose.model("Order", orderSchema);
 
 export default Order;
