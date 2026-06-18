@@ -8,7 +8,7 @@ export const isAuthenthicated = async(req,res,next) => {
 
     // Check Token
     if(!token){
-        return res.status(401).josn({
+        return res.status(401).json({
             message: "Not Authenthicated",
             success: false
         });
@@ -49,7 +49,7 @@ export const isAuthenthicated = async(req,res,next) => {
 
     } catch (error) {
         console.log(`Error - ${error}`);
-        return res.status(401).josn({
+        return res.status(401).json({
             message: "Not Aunthenthicated",
             success: false
         });

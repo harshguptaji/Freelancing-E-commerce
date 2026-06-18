@@ -47,7 +47,7 @@ export const registerUser = async(req,res) => {
         if(checkUser){
             return res.status(400).json({
                 message: "Email or Password already register with us",
-                sucess: false
+                success: false
             });
         }
 
@@ -68,7 +68,11 @@ export const registerUser = async(req,res) => {
         });
 
     } catch (error) {
-        console.log(`Error - ${error}`);
+        console.log(`Error1 - ${error}`);
+        return res.status(500).json({
+            success: false,
+            message: error.message
+     });
     }
 };
 

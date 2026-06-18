@@ -68,19 +68,22 @@ const userSchema = new mongoose.Schema({
 });
 
 
-userSchema.pre("save", async function (next){
+userSchema.pre("save", async function (){
+    try{
 
-    if(this.isModified("userPassword")){
-        this.userPassword = await bcrypt.hash(this.userPassword, 10);
-    } 
-    if(this.isModified("userEmailOTP")){
-        this.userEmailOTP = await bcrypt.hash(this.userEmailOTP,10)
-    }
-    if(this.isModified("userMobileOTP")){
-        this.userMobileOTP = await bcrypt.hash(this.userMobileOTP,10)
-    }
-
-    next();
+        if(this.isModified("userPassword")){
+            this.userPassword = await bcrypt.hash(this.userPassword, 10);
+        } 
+        if(this.isModified("userEmailOTP")){
+            this.userEmailOTP = await bcrypt.hash(this.userEmailOTP,10)
+        }
+        if(this.isModified("userMobileOTP")){
+            this.userMobileOTP = await bcrypt.hash(this.userMobileOTP,10)
+        }
+    
+    }catch(error){
+        throw new Error(error);
+    }  
 });
 
 userSchema.methods.comparePassword = async function(enteredPassword){
